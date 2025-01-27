@@ -19,3 +19,75 @@
 - pyautogui : 화면 캡처
 - pytesseract : 텍스트 추출
 - ast : 문법 오류 검사
+
+# 2025-01-27
+- 몸체 파일
+```
+# 실시간 화면 캡처를 통해 기초 문법적 오류를 수정해주는 프로그램
+import time
+import pyautogui
+import pytesseract
+import cv2
+import numpy as np
+import keyboard
+from image_process import image_processing
+from error_process import analyze_code, display_errors
+
+def on_press(key):
+    if key.name == 'esc':
+        print("program end")
+        return False #프로그램 종료 함수 (사용자가 esc키를 누르면 종료)
+    
+keyboard.on_press(on_press) # 키보드 이벤트 리스너 설정
+
+answer = 'no'
+
+while answer == 'no':
+    get_region = np.array(pyautogui.screenshot())
+    get_region = cv2.cvtColor(get_region, cv2.COLOR_RGB2BGR)
+    x, y, width, height = cv2.selectROI(windowName='Drag mouse to select region. When youre done, press enter', img=get_region)
+    selected_region = get_region[y:y+height, x:x+width] # 선택영역 이미지 잘라내기
+    
+    cv2.imshow('show you the region for 3 seconds', selected_region)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()
+    
+    answer = input('Are you sure that this region is you wanted?(answer is yes or no)')
+    # 앞으로 지켜볼 영역 지정
+
+while True:
+    screenshot = pyautogui.screenshot(region=(x, y, width, height))
+    screenshot = np.array(screenshot)
+    screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+    screenshot = image_processing(screenshot) # 이미지 전처리
+    text = pytesseract.image_to_string(screenshot)
+    errors = analyze_code(text)  # 텍스트 추출 및 오류검사
+    if errors:
+        display_errors(errors)  # 수정안 이미지 반환
+    time.sleep(5)  # 5초마다 체크
+```
+- 이미지 전처리 파일
+```
+import cv2
+# 이미지 전처리 함수
+def image_processing(screenshot):
+    # 노이즈 제거
+    denoised = cv2.fastNlMeansDenoisingColored(screenshot, None, 10, 10, 7, 21)
+
+    # 그레이스케일 변환
+    gray = cv2.cvtColor(denoised, cv2.COLOR_BGR2GRAY)
+
+    # 대비 향상 (배경에서 코드 추출 잘 되도록)
+    binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+    return binary
+```
+- 문법 오류 수정 및 수정안 파일 (아직 안 만들었음)
+```
+# 오류 검사
+def analyze_code():
+    return
+# 수정안 반환
+def display_errors(error):
+    return
+```
+
