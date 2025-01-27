@@ -90,4 +90,36 @@ def analyze_code():
 def display_errors(error):
     return
 ```
+- 오늘 구현 기능 테스트 파일
+```
+from python_error_finder import image_process
+import time
+import pyautogui
+import cv2
+import numpy as np
+import pytesseract
 
+answer = 'no'
+
+while answer == 'no':
+    get_region = np.array(pyautogui.screenshot())
+    get_region = cv2.cvtColor(get_region, cv2.COLOR_RGB2BGR)
+    x, y, width, height = cv2.selectROI(windowName='Drag mouse to select region. When you done, push enter', img=get_region)
+    cv2.destroyAllWindows()
+    selected_region = get_region[y:y+height, x:x+width] # 선택영역 이미지 잘라내기
+    
+    cv2.imshow('selected region', selected_region)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()
+    
+    answer = input('Is this region is you wanted?(answer is yes or no)')
+    # 앞으로 지켜볼 영역 지정
+
+screenshot = pyautogui.screenshot(region=(x, y, width, height))
+screenshot = np.array(screenshot)
+screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+screenshot = image_process.image_processing(screenshot) # 이미지 전처리
+
+text = pytesseract.image_to_string(screenshot, lang = 'kor')
+print(text)
+```
