@@ -66,6 +66,9 @@ while True:
         display_errors(errors)  # 수정안 이미지 반환
     time.sleep(5)  # 5초마다 체크
 ```
+- 설명
+keyboard라이브러리로 
+
 - 이미지 전처리 파일
 ```
 import cv2
@@ -123,3 +126,4 @@ screenshot = image_process.image_processing(screenshot) # 이미지 전처리
 text = pytesseract.image_to_string(screenshot, lang = 'kor')
 print(text)
 ```
+
