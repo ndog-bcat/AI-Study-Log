@@ -126,4 +126,8 @@ screenshot = image_process.image_processing(screenshot) # 이미지 전처리
 text = pytesseract.image_to_string(screenshot, lang = 'kor')
 print(text)
 ```
-
+#수정할 점
+- 텍스트 추출 함수 인식도 처참함 (매우 중요, 이미지 전처리 보완 필요)
+- 다언어 텍스트 추출 시 어려움이 있을 듯 하여 수정 필요
+- 마우스 드래그 후 별도의 입력 없이 바로 캡처기능으로 이어지는 것이 좋을 듯 하다.
+- 안내 텍스트 출력에 있어 한글 제한. 수정 필요
