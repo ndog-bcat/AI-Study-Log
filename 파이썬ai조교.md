@@ -237,3 +237,4 @@ print(text_result)
 - ![image](https://github.com/user-attachments/assets/8d657809-19d3-4955-a25b-4ec40dbd5a2c)
 - 이미지 조정 후 텍스트 추출
 - ![image](https://github.com/user-attachments/assets/69d2aac0-feca-47c2-a2a7-a93a9c12c29e)
+- 돌려보고 정말 기뻤다. 영어와 한글 모두 확연하게 인식률이 오른 것을 볼 수 있었다.
