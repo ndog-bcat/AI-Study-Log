@@ -232,8 +232,8 @@ print(text_result)
 ```
 - 참고로 이미지 전처리 부분은 챗지피티의 도움을 좀 받아서 샘플 코드를 받아 넣었다. 이 샘플 코드와 내 기존 전처리 파일 코드를 비교해서 개선해서 내 코드를 고쳐야겠다. 이미지 전처리 중간의 oem과 psm이 뭔지 알아보았는데 설명은 밑에 넣어보겠다.
 - 텍스트 추출 할 이미지
-[![image](https://github.com/user-attachments/assets/9c30dfca-b717-4338-b35a-13507dc8f423)]
+- [![image](https://github.com/user-attachments/assets/9c30dfca-b717-4338-b35a-13507dc8f423)]
 - 이미지 조정 전 텍스트 추출
-[![image](https://github.com/user-attachments/assets/6664a5e2-a4a5-48e1-b4b1-029faa2b4e4d)]
+- [![image](https://github.com/user-attachments/assets/6664a5e2-a4a5-48e1-b4b1-029faa2b4e4d)]
 - 이미지 조정 후 텍스트 추출
-[![image](https://github.com/user-attachments/assets/69d2aac0-feca-47c2-a2a7-a93a9c12c29e)]
+- [![image](https://github.com/user-attachments/assets/69d2aac0-feca-47c2-a2a7-a93a9c12c29e)]
