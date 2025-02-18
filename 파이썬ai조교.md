@@ -131,3 +131,106 @@ print(text)
 - 다언어 텍스트 추출 시 어려움이 있을 듯 하여 수정 필요
 - 마우스 드래그 후 별도의 입력 없이 바로 캡처기능으로 이어지는 것이 좋을 듯 하다.
 - 안내 텍스트 출력에 있어 한글 제한. 수정 필요
+
+# 2025-02-18
+- 일단 이미지 전처리도 중요하지만 ocr에서 글자높이가 중요하다는 정보를 구글에서 읽었다. 그래서 일단 이미지에서 글자 높이를 추출하고 난 후 cv2.resize로 글자를 넉넉하게 30픽셀로 만들어서 텍스트 추출을 해보도록 하겠다.
+- 글자 크기 뽑는 테스트 파일
+```
+#글자 크기 잡기
+import pytesseract
+from PIL import Image
+import os
+
+desktop_path = r'C:\Users\admin\Desktop'
+image_name = 'vscode캡처.png'
+image_path = os.path.join(desktop_path, image_name)
+image = Image.open(image_path)
+data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+
+# 글자 크기 측정
+heights = [int(data['height'][i]) for i in range(len(data['text'])) if data['text'][i].strip() != '']
+average_height = sum(heights) // len(heights)
+
+print(average_height)
+```
+- 이렇게 해서 글자크기를 뽑은 다음 scale_factor = 30/average_height로 정한 다음 cv2.resize를 이용해서 글자크기를 30픽셀이 되는 이미지 크기로 만들어서 텍스트 추출을 해야겠다.
+- 글자 크기 조정 후 텍스트 추출 테스트 파일
+```
+import cv2
+import pytesseract
+import numpy as np
+import pyautogui
+
+# PyTesseract의 Tesseract 경로 설정 (Windows 환경이라면 필요)
+# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+def preprocess_image(img, apply_threshold):
+    # 그레이스케일 변환
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # 노이즈 제거 (GaussianBlur 적용)
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    # 이진화 적용 (선택적)
+    if apply_threshold:
+        gray = cv2.adaptiveThreshold(
+            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+        )
+
+    return gray
+
+def extract_text(img, apply_threshold):
+    # 이미지 전처리
+    processed_img = preprocess_image(img, apply_threshold)
+
+    # OCR 설정: --psm 6은 코드 블록에 적합
+    custom_config = r"--oem 3 --psm 6"
+
+    # 텍스트 추출
+    extracted_text = pytesseract.image_to_string(processed_img, lang="eng+kor", config=custom_config)
+
+    return extracted_text
+
+apply_threshold = False #이진화 여부
+
+answer = 'no'
+
+while answer == 'no':
+    get_region = np.array(pyautogui.screenshot())
+    get_region = cv2.cvtColor(get_region, cv2.COLOR_RGB2BGR)
+    x, y, width, height = cv2.selectROI(windowName='Drag mouse to select region. When youre done, press enter', img=get_region)
+    selected_region = get_region[y:y+height, x:x+width] # 선택영역 이미지 잘라내기
+    
+    cv2.imshow('show you the region for 3 seconds', selected_region)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()
+    
+    answer = input('Are you sure that this region is you wanted?(answer is yes or no)')
+    # 앞으로 지켜볼 영역 지정
+
+# 테스트할 이미지 경로
+screenshot = pyautogui.screenshot(region=(x, y, width, height))
+screenshot = np.array(screenshot)
+screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+height, width, _ = screenshot.shape
+data = pytesseract.image_to_data(preprocess_image(screenshot, apply_threshold), output_type=pytesseract.Output.DICT)
+
+# 글자 크기 측정
+heights = [int(data['height'][i]) for i in range(len(data['text'])) if data['text'][i].strip() != '']
+average_height = sum(heights) / len(heights)
+
+# 이미지 크기 조정 비율
+scale_factor = 30 / average_height
+new_size = (int(width*scale_factor), int(height*scale_factor))
+
+# 이미지 크기 변경
+screenshot = cv2.resize(screenshot, new_size)
+
+# 텍스트 추출 실행
+text_result = extract_text(screenshot, apply_threshold)
+print(text_result)
+```
+- 참고로 이미지 전처리 부분은 챗지피티의 도움을 좀 받아서 샘플 코드를 받아 넣었다. 이 샘플 코드와 내 기존 전처리 파일 코드를 비교해서 개선해서 내 코드를 고쳐야겠다. 이미지 전처리 중간의 oem과 psm이 뭔지 알아보았는데 설명은 밑에 넣어보겠다.
+- 텍스트 추출 할 이미지 [![image](https://github.com/user-attachments/assets/9c30dfca-b717-4338-b35a-13507dc8f423)
+]
+- 이미지 조정 전 텍스트 추출 [![image](https://github.com/user-attachments/assets/6664a5e2-a4a5-48e1-b4b1-029faa2b4e4d)] 이미지 조정 후 텍스트 추출 [![image](https://github.com/user-attachments/assets/69d2aac0-feca-47c2-a2a7-a93a9c12c29e)]
