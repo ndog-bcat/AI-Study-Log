@@ -161,9 +161,6 @@ import pytesseract
 import numpy as np
 import pyautogui
 
-# PyTesseract의 Tesseract 경로 설정 (Windows 환경이라면 필요)
-# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
 def preprocess_image(img, apply_threshold):
     # 그레이스케일 변환
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -238,3 +235,138 @@ print(text_result)
 - 이미지 조정 후 텍스트 추출
 - ![image](https://github.com/user-attachments/assets/69d2aac0-feca-47c2-a2a7-a93a9c12c29e)
 - 돌려보고 정말 기뻤다. 영어와 한글 모두 확연하게 인식률이 오른 것을 볼 수 있었다.
+- 본 코드 파일
+- 바뀐점 : 이진화 여부 변수 추가, 이미지 전처리 함수 파라미터 추가(이진화 여부), 텍스트 추출 함수 추가
+```
+# 실시간 화면 캡처를 통해 기초 문법적 오류를 수정해주는 프로그램
+import time
+import pyautogui
+import pytesseract
+import cv2
+import numpy as np
+import keyboard
+from image_process import image_processing
+from error_process import analyze_code, display_errors
+from text_process import extract_text
+
+def on_press(key):
+    if key.name == 'esc':
+        print("program end")
+        return False #프로그램 종료 함수 (사용자가 esc키를 누르면 종료)
+    
+keyboard.on_press(on_press) # 키보드 이벤트 리스너 설정
+
+answer = 'no'
+
+while answer == 'no':
+    get_region = np.array(pyautogui.screenshot())
+    get_region = cv2.cvtColor(get_region, cv2.COLOR_RGB2BGR)
+    x, y, width, height = cv2.selectROI(windowName='Drag mouse to select region. When youre done, press enter', img=get_region)
+    selected_region = get_region[y:y+height, x:x+width] # 선택영역 이미지 잘라내기
+    
+    cv2.imshow('show you the region for 3 seconds', selected_region)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()
+    
+    answer = input('Are you sure that this region is you wanted?(answer is yes or no)')
+    # 앞으로 지켜볼 영역 지정
+
+apply_threshold = False # 이진화 여부 변수 (이진화를 원하면 True 아니면 False지만 경험상 안쓰는게 나을듯)
+
+while True:
+    screenshot = pyautogui.screenshot(region=(x, y, width, height))
+    screenshot = np.array(screenshot)
+    screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+    screenshot = image_processing(screenshot, apply_threshold) # 이미지 전처리
+    text = extract_text(screenshot) # 텍스트 추출
+    errors = analyze_code(text)  # 오류검사
+    if errors:
+        display_errors(errors)  # 수정안 이미지 반환
+    time.sleep(5)  # 5초마다 체크
+```
+- 이미지 전처리 파일
+- 바뀐점 : 글씨 높이 기반 이미지 크기 조정 추가, 이진화 여부 파라미터 추가(하지만 안쓰는게 인식률이 좋아 쓰지않을 것으로 예상됨), 노이즈제거는 챗지피티가 말한 가우시안블러(속도 빠름)보다 정확성을 위해 있던 걸 썼다. 그러나 그레이스케일변환을 먼저 해서 노이즈제거 함수도 그에 맞는 걸 써야해서 'Colored'가 빠진 걸 볼 수 있다. 그리고 height,width,_가 아닌 height,width로 받게 된 이유도 위에 테스트에서 사용한 컬러이미지는 색상정보가 있어 3차원정보를 받았지만 본 코드에서는 그레이이미지로 받기 때문에 gray.shape 안에는 height와 width만 들어가서 그렇다.
+```
+import cv2
+import numpy as np
+import pytesseract
+# 이미지 전처리 함수
+def image_processing(screenshot, apply_threshold):
+    # 그레이스케일 변환
+    gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
+    
+    # 노이즈 제거
+    gray = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
+
+
+    # 대비 향상 : 이진화 (배경에서 코드 추출 잘 되도록)
+    if apply_threshold:
+        gray = cv2.adaptiveThreshold(
+            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+            )
+        
+    # 글자 높이 기반 이미지 크기 조정
+    height, width = gray.shape
+    data = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT)
+
+    # 글자 크기 측정
+    heights = [int(data['height'][i]) for i in range(len(data['text'])) if data['text'][i].strip() != '']
+    average_height = sum(heights) / len(heights)
+
+    # 이미지 크기 조정 비율
+    scale_factor = 30 / average_height
+    new_size = (int(width*scale_factor), int(height*scale_factor))
+
+    # 이미지 크기 변경
+    gray = cv2.resize(gray, new_size)
+
+    return gray
+```
+- 텍스트 추출 파일(새로 생김)
+- https://m.blog.naver.com/johnsmithbrainseven/222242853850 (장풍님 블로그 글)
+- 여기에 oem과 psm의 설명이 되어있다. oem에서 legacy엔진 쓰냐 lstm엔진쓰냐 이런게 뭔가 하니 언어학습에 쓰인 데이터가 legacy엔진을 위해 학습된 건지 lstm엔진을 위해 학습된 건지가 정해져있어서 엔진모드를 정해주는 거였다. 나는 tessdata를 다운받았고 tessdata는 둘 다 되는 모양이다.
+```
+import pytesseract
+
+def extract_text(img):
+    # OCR 설정: psm6(한글인식.....텍스트의 균일한 단일 블록을 가정함)-코드 블록 적합
+    custom_config = r"--oem 3 --psm 6"
+
+    # 텍스트 추출
+    extracted_text = pytesseract.image_to_string(img, lang="eng+kor", config=custom_config)
+
+    return extracted_text
+```
+- 이미지전처리함수와 텍스트추출함수의 테스트 코드파일
+```
+import pyautogui
+import pytesseract
+import cv2
+import numpy as np
+from python_error_finder.image_process import image_processing
+from python_error_finder.text_process import extract_text
+
+answer = 'no'
+
+while answer == 'no':
+    get_region = np.array(pyautogui.screenshot())
+    get_region = cv2.cvtColor(get_region, cv2.COLOR_RGB2BGR)
+    x, y, width, height = cv2.selectROI(windowName='Drag mouse to select region. When youre done, press enter', img=get_region)
+    selected_region = get_region[y:y+height, x:x+width] # 선택영역 이미지 잘라내기
+    
+    cv2.imshow('show you the region for 3 seconds', selected_region)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()
+    
+    answer = input('Are you sure that this region is you wanted?(answer is yes or no)')
+    # 앞으로 지켜볼 영역 지정
+
+apply_threshold = False
+
+screenshot = pyautogui.screenshot(region=(x, y, width, height))
+screenshot = np.array(screenshot)
+screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+screenshot = image_processing(screenshot, apply_threshold)
+text = extract_text(screenshot)
+print(text)
+```
