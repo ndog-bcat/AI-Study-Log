@@ -234,6 +234,6 @@ print(text_result)
 - 텍스트 추출 할 이미지
 - ![image](https://github.com/user-attachments/assets/9c30dfca-b717-4338-b35a-13507dc8f423)
 - 이미지 조정 전 텍스트 추출
-- ![image](https://github.com/user-attachments/assets/6664a5e2-a4a5-48e1-b4b1-029faa2b4e4d)
+- ![image](https://github.com/user-attachments/assets/8d657809-19d3-4955-a25b-4ec40dbd5a2c)
 - 이미지 조정 후 텍스트 추출
 - ![image](https://github.com/user-attachments/assets/69d2aac0-feca-47c2-a2a7-a93a9c12c29e)
