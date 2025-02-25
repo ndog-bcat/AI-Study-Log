@@ -126,11 +126,9 @@ screenshot = image_process.image_processing(screenshot) # 이미지 전처리
 text = pytesseract.image_to_string(screenshot, lang = 'kor')
 print(text)
 ```
-#수정할 점
+# 수정할 점
 - 텍스트 추출 함수 인식도 처참함 (매우 중요, 이미지 전처리 보완 필요)
 - 다언어 텍스트 추출 시 어려움이 있을 듯 하여 수정 필요
-- 마우스 드래그 후 별도의 입력 없이 바로 캡처기능으로 이어지는 것이 좋을 듯 하다.
-- 안내 텍스트 출력에 있어 한글 제한. 수정 필요
 
 # 2025-02-18
 - 일단 이미지 전처리도 중요하지만 ocr에서 글자높이가 중요하다는 정보를 구글에서 읽었다. 그래서 일단 이미지에서 글자 높이를 추출하고 난 후 cv2.resize로 글자를 넉넉하게 30픽셀로 만들어서 텍스트 추출을 해보도록 하겠다.
@@ -370,3 +368,7 @@ screenshot = image_processing(screenshot, apply_threshold)
 text = extract_text(screenshot)
 print(text)
 ```
+# 보완할 점
+- 문법 오류를 구현하려다 보니 텍스트에 공백도 이미지와 똑같이 들어가있어야 한다는 점을 알게 됐다.
+- 데이터(image_to_data)랑 텍스트를 잘 매핑해서 이미지에 수정텍스트를 넣을 수 있도록 하자.
+
